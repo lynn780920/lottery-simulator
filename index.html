@@ -60,7 +60,7 @@
     </style>
 </head>
 <body>
-    <h1>試試你的手氣!!頭獎機率0.1%</h1>
+    <h1>試試你的手氣!! <h1>頭獎機率0.3%</h1>
     <button onclick="drawMultiple(1)">抽 1 次</button>
     <button onclick="drawMultiple(3)">抽 3 次</button>
     <button onclick="drawMultiple(5)">抽 5 次</button>
@@ -74,18 +74,18 @@
     <div id="log"></div>
 
     <script>
-        const costPerDraw = 35;  // 每次抽獎的花費為 35 元
+        const costPerDraw = 170;  // 每次抽獎的花費為 35 元
         let totalDraws = 0;      // 累積抽獎次數
         let totalCost = 0;       // 累積花費金額
 
         function drawPrize() {
             // 獎項與機率設定
             const prizes = [
-                { name: "頭獎!!", probability: 0.001, cssClass: "grandPrize" },  // 0.1%
+                { name: "頭獎!!", probability: 0.003, cssClass: "grandPrize" },  // 0.1%
                 { name: "二獎", probability: 0.008, cssClass: "secondPrize" },   // 0.8%
                 { name: "三獎", probability: 0.02, cssClass: "thirdPrize" },    // 2%
                 { name: "普通獎", probability: 0.08, cssClass: "normalPrize" },  // 8%
-                { name: "安慰獎", probability: 0.899, cssClass: "consolationPrize" } // 94.68%
+                { name: "安慰獎", probability: 0.889, cssClass: "consolationPrize" } // 94.68%
             ];
 
             let randomNumber = Math.random();
