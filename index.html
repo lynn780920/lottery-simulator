@@ -15,8 +15,18 @@
         /* 按鈕樣式 */
         button {
             font-size: 20px;
-            padding: 20px 30px;
-            margin: 20px;
+            padding: 10px 20px;
+            margin: 10px;
+        }
+
+        /* 儲值按鈕藍色 */
+        .addFunds {
+            color: blue;
+        }
+
+        /* 回收按鈕紅色 */
+        .recycle {
+            color: red;
         }
 
         /* 滾動動畫區域 */
@@ -44,7 +54,7 @@
 
         @keyframes spin {
             0% { transform: translateY(0); }
-            100% { transform: translateY(-250px); } /* 滾動 5 個項目 */
+            100% { transform: translateY(-250px); }
         }
 
         .result-display {
@@ -57,6 +67,41 @@
             display: flex;
             flex-wrap: wrap;
         }
+
+        /* 回收視窗樣式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background: white;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            width: 300px;
+        }
+
+        .modal h3 {
+            margin-top: 0;
+        }
+
+        .modal-buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
     </style>
 </head>
 <body>
@@ -65,27 +110,68 @@
     <button onclick="drawMultiple(3)">抽 3 次</button>
     <button onclick="drawMultiple(5)">抽 5 次</button>
     <button onclick="drawMultiple(12)">抽 12 次</button>
-    <button onclick="drawMultiple(100)">抽 100 次</button>
+    <div>
+
+        <h3>儲值及回收</h3>
+
+ <button class="recycle" onclick="openRecycleModal()">回收</button>
+ <div>
+        <button class="addFunds" onclick="confirmAddFunds(500)">儲值 500 元</button>
+        <button class="addFunds" onclick="confirmAddFunds(1000)">儲值 1000 元</button>
+        <button class="addFunds" onclick="confirmAddFunds(2000)">儲值 2000 元</button>
+
+       
+    </div>
     <div class="spinner-container" id="spinnerContainer"></div>
     <p id="result" class="result-display">點擊上方按鈕進行抽獎！</p>
     <p id="totalDraws">已抽次數：0</p>
     <p id="totalCost">累積花費：0 元</p>
+    <p id="totalBalance">餘額：0 元</p>
+    <p id="totalAddedFunds">累積儲值：0 元</p>
     <h2>抽獎紀錄</h2>
     <div id="log"></div>
+
+    <!-- 回收視窗 -->
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal" id="recycleModal">
+        <h3>選擇想回收的獎項</h3>
+        <div id="recycleOptions"></div>
+        <div class="modal-buttons">
+            <p id="recycleTotal">總回收金額：0 元</p>
+            <button onclick="confirmRecycle()">確認回收</button>
+            <button onclick="closeRecycleModal()">取消</button>
+        </div>
+    </div>
 
     <script>
         const costPerDraw = 12;  // 每次抽獎的花費為 12 元
         let totalDraws = 0;      // 累積抽獎次數
         let totalCost = 0;       // 累積花費金額
+        let balance = 0;         // 餘額
+        let totalAddedFunds = 0; // 累積儲值金額
+        let winnings = [];       // 抽到的獎品清單
+
+        function confirmAddFunds(amount) {
+            const confirmResult = confirm(`是否儲值 ${amount} 元？`);
+            if (confirmResult) {
+                addFunds(amount);
+            }
+        }
+
+        function addFunds(amount) {
+            balance += amount;
+            totalAddedFunds += amount;
+            document.getElementById("totalBalance").textContent = `餘額：${balance} 元`;
+            document.getElementById("totalAddedFunds").textContent = `累積儲值：${totalAddedFunds} 元`;
+        }
 
         function drawPrize() {
-            // 獎項與機率設定
             const prizes = [
-                { name: "頭獎!!", probability: 0.0005, cssClass: "grandPrize" },  // 0.1%
-                { name: "二獎", probability: 0.001, cssClass: "secondPrize" },   // 0.8%
-                { name: "三獎", probability: 0.012, cssClass: "thirdPrize" },    // 2%
-                { name: "普通獎", probability: 0.06, cssClass: "normalPrize" },  // 8%
-                { name: "安慰獎", probability: 0.9265, cssClass: "consolationPrize" } // 94.68%
+                { name: "頭獎!!", probability: 0.0005, cssClass: "grandPrize", value: 20000 },
+                { name: "二獎", probability: 0.001, cssClass: "secondPrize", value: 1000 },
+                { name: "三獎", probability: 0.012, cssClass: "thirdPrize", value: 300 },
+                { name: "普通獎", probability: 0.06, cssClass: "normalPrize", value: 24 },
+                { name: "安慰獎", probability: 0.9265, cssClass: "consolationPrize", value: 0 }
             ];
 
             let randomNumber = Math.random();
@@ -97,17 +183,22 @@
                     return prize;
                 }
             }
-            return prizes[prizes.length - 1]; // 保底返回安慰獎
+            return prizes[prizes.length - 1];
         }
 
         async function drawMultiple(times) {
+            if (balance < times * costPerDraw) {
+                alert("餘額不足，請儲值！");
+                return;
+            }
+
             const spinnerContainer = document.getElementById("spinnerContainer");
-            spinnerContainer.innerHTML = ""; // 清空之前的結果
+            spinnerContainer.innerHTML = "";
             const resultDisplay = document.getElementById("result");
             resultDisplay.innerHTML = "正在抽獎中...";
             let results = [];
 
-            // 每次抽獎的花費和累積計算
+            balance -= times * costPerDraw;
             totalDraws += times;
             totalCost += times * costPerDraw;
 
@@ -126,37 +217,29 @@
                 `;
                 spinnerContainer.appendChild(spinner);
 
-                // 延遲動畫執行
                 (function(index) {
                     setTimeout(async () => {
                         const prize = drawPrize();
-
-                        // 啟動滾動動畫
                         const spinnerContent = document.getElementById(`spinnerContent${index}`);
                         spinnerContent.classList.add("animate");
-
-                        // 等待動畫結束
                         await new Promise(resolve => setTimeout(resolve, 350));
                         spinnerContent.classList.remove("animate");
 
-                        // 顯示結果
                         spinner.innerHTML = `<span class="${prize.cssClass}">${prize.name}</span>`;
+                        winnings.push(prize);
                         results.push(prize.name);
 
-                        // 記錄中獎結果
-                        if (["頭獎!!", "二獎", "三獎"].includes(prize.name)) {
+                        if (prize.name !== "安慰獎") {
                             addLogEntry(prize);
                         }
 
-                        // 更新最終結果
                         if (results.length === times) {
-                            resultDisplay.innerHTML = `全部結果：${results.map(
-                                r => `<span>${r}</span>`
-                            ).join(", ")}`;
+                            resultDisplay.innerHTML = `抽獎完成！`;
                             document.getElementById("totalDraws").textContent = "已抽次數：" + totalDraws;
                             document.getElementById("totalCost").textContent = "累積花費：" + totalCost + " 元";
+                            document.getElementById("totalBalance").textContent = `餘額：${balance} 元`;
                         }
-                    }, i * 80); // 每次抽獎稍作延遲，製造逐次動畫效果
+                    }, i * 80);
                 })(i);
             }
         }
@@ -168,6 +251,87 @@
 
             logEntry.innerHTML = `${dateString} - <span class="${prize.cssClass}">${prize.name}</span>`;
             document.getElementById("log").prepend(logEntry);
+        }
+
+        function openRecycleModal() {
+            if (winnings.length === 0) {
+                alert("無東西可回收！");
+                return;
+            }
+
+            const modal = document.getElementById("recycleModal");
+            const backdrop = document.getElementById("modalBackdrop");
+            const optionsContainer = document.getElementById("recycleOptions");
+
+            optionsContainer.innerHTML = '<label><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"> 全選</label><br>';
+            winnings.forEach((prize, index) => {
+                if (prize.value > 0) {
+                    optionsContainer.innerHTML += `
+                        <label>
+                            <input type="checkbox" class="recycleOption" value="${index}">
+                            ${prize.name} (${prize.value} 元)
+                        </label><br>
+                    `;
+                }
+            });
+
+            updateRecycleTotal();
+            modal.style.display = "block";
+            backdrop.style.display = "block";
+        }
+
+        function toggleSelectAll(checkbox) {
+            const options = document.querySelectorAll(".recycleOption");
+            options.forEach(option => {
+                option.checked = checkbox.checked;
+            });
+            updateRecycleTotal();
+        }
+
+        function updateRecycleTotal() {
+            const options = document.querySelectorAll(".recycleOption:checked");
+            let total = 0;
+
+            options.forEach(option => {
+                const prize = winnings[parseInt(option.value)];
+                total += prize.value;
+            });
+
+            document.getElementById("recycleTotal").textContent = `總回收金額：${total} 元`;
+        }
+
+        function confirmRecycle() {
+            const options = document.querySelectorAll(".recycleOption:checked");
+            let total = 0;
+
+            const newWinnings = [];
+            winnings.forEach((prize, index) => {
+                if (![...options].some(option => parseInt(option.value) === index)) {
+                    newWinnings.push(prize);
+                } else {
+                    total += prize.value;
+                }
+            });
+
+            balance += total;
+            winnings = newWinnings;
+            document.getElementById("log").innerHTML = ""; // 清空紀錄
+            winnings.forEach(prize => {
+                if (prize.name !== "安慰獎") {
+                    addLogEntry(prize);
+                }
+            });
+
+            document.getElementById("totalBalance").textContent = `餘額：${balance} 元`;
+            closeRecycleModal();
+            alert(`已成功回收 ${total} 元！`);
+        }
+
+        function closeRecycleModal() {
+            const modal = document.getElementById("recycleModal");
+            const backdrop = document.getElementById("modalBackdrop");
+            modal.style.display = "none";
+            backdrop.style.display = "none";
         }
     </script>
 </body>
