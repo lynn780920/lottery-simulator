@@ -144,7 +144,7 @@
     </div>
 
     <script>
-        const costPerDraw = 12;  // 每次抽獎的花費為 12 元
+        const costPerDraw = 35;  // 每次抽獎的花費為 12 元
         let totalDraws = 0;      // 累積抽獎次數
         let totalCost = 0;       // 累積花費金額
         let balance = 0;         // 餘額
@@ -169,9 +169,9 @@
             const prizes = [
                 { name: "頭獎!!", probability: 0.0005, cssClass: "grandPrize", value: 20000 },
                 { name: "二獎", probability: 0.001, cssClass: "secondPrize", value: 1000 },
-                { name: "三獎", probability: 0.012, cssClass: "thirdPrize", value: 300 },
-                { name: "普通獎", probability: 0.06, cssClass: "normalPrize", value: 24 },
-                { name: "安慰獎", probability: 0.9265, cssClass: "consolationPrize", value: 0 }
+                { name: "三獎", probability: 0.010, cssClass: "thirdPrize", value: 300 },
+                { name: "普通獎", probability: 0.06, cssClass: "normalPrize", value: 35 },
+                { name: "安慰獎", probability: 0.9465, cssClass: "consolationPrize", value: 0 }
             ];
 
             let randomNumber = Math.random();
