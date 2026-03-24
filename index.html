@@ -2,337 +2,303 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=2.0">
-    <title>抽獎模擬</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高級抽獎模擬器 V2</title>
     <style>
-        /* 定義不同獎項的字體顏色 */
-        .grandPrize { color: red; font-weight: bold; }
-        .secondPrize { color: blue; font-weight: bold; }
-        .thirdPrize { color: green; font-weight: bold; }
-        .normalPrize { color: black; }
-        .consolationPrize { color: gray; }
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --accent-color: #38bdf8;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 95%;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 { font-style: italic; color: var(--accent-color); text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
+
+        /* 設定區塊樣式 */
+        .settings-panel {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+            text-align: left;
+        }
+        
+        .setting-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 5px;
+            align-items: center;
+        }
+
+        input {
+            background: #0f172a;
+            border: 1px solid #475569;
+            color: white;
+            padding: 5px;
+            border-radius: 4px;
+            width: 100%;
+        }
 
         /* 按鈕樣式 */
+        .btn-group { margin: 20px 0; }
         button {
-            font-size: 20px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: white;
+            border: none;
             padding: 10px 20px;
-            margin: 10px;
-        }
-
-        /* 儲值按鈕藍色 */
-        .addFunds {
-            color: blue;
-        }
-
-        /* 回收按鈕紅色 */
-        .recycle {
-            color: red;
-        }
-
-        /* 滾動動畫區域 */
-        .spinner {
-            font-size: 24px;
-            height: 50px;
-            overflow: hidden;
-            position: relative;
-            border: 2px solid #000;
-            display: inline-block;
-            width: 80px;
-            text-align: center;
-            margin: 10px;
-        }
-
-        .spinner span {
-            display: block;
-            height: 50px;
-            line-height: 50px;
-        }
-
-        .animate {
-            animation: spin 2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-        }
-
-        @keyframes spin {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(-250px); }
-        }
-
-        .result-display {
-            margin-top: 15px;
-            font-size: 19px;
+            margin: 5px;
+            border-radius: 8px;
             font-weight: bold;
+            transition: 0.2s;
         }
+        button:hover { transform: scale(1.05); filter: brightness(1.2); }
+        button.secondary { background: #475569; }
 
+        /* 統計區 */
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-box { font-size: 0.9rem; color: #94a3b8; }
+        .stat-val { display: block; font-size: 1.2rem; color: #fbbf24; font-weight: bold; }
+
+        /* 抽獎轉盤顯示區 */
         .spinner-container {
             display: flex;
             flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            min-height: 60px;
         }
 
-        /* 回收視窗樣式 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1000;
-            background: white;
-            border: 1px solid #ccc;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            padding: 20px;
-            width: 300px;
+        .spinner {
+            width: 120px;
+            height: 50px;
+            border: 2px solid #38bdf8;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            position: relative;
         }
 
-        .modal h3 {
-            margin-top: 0;
+        .spinner-content {
+            display: flex;
+            flex-direction: column;
+            transition: transform 1.5s cubic-bezier(0.15, 0.85, 0.35, 1);
         }
 
-        .modal-buttons {
+        .spinner-item {
+            height: 50px;
+            line-height: 50px;
             text-align: center;
-            margin-top: 20px;
+            font-weight: bold;
+            flex-shrink: 0;
         }
 
-        .modal-backdrop {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
+        /* 紀錄區 */
+        .log-container {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            text-align: left;
         }
+        .log-item {
+            border-bottom: 1px solid #334155;
+            padding: 5px 0;
+            font-size: 0.85rem;
+        }
+
+        .hidden { display: none; }
     </style>
 </head>
 <body>
-    <h3>試試你的手氣!!頭獎機率0.05%</h3>
-    <button onclick="drawMultiple(1)">抽 1 次</button>
-    <button onclick="drawMultiple(3)">抽 3 次</button>
-    <button onclick="drawMultiple(5)">抽 5 次</button>
-    <button onclick="drawMultiple(12)">抽 12 次</button>
-    <div>
 
-        <h3>儲值及回收</h3>
+<div class="container">
+    <h1>🏆 高級抽獎模擬器</h1>
 
- <button class="recycle" onclick="openRecycleModal()">回收</button>
- <div>
-        <button class="addFunds" onclick="confirmAddFunds(500)">儲值 500 元</button>
-        <button class="addFunds" onclick="confirmAddFunds(1000)">儲值 1000 元</button>
-        <button class="addFunds" onclick="confirmAddFunds(2000)">儲值 2000 元</button>
-
-       
+    <div class="stats">
+        <div class="stat-box">單次花費 <span id="priceDisplay" class="stat-val">$35</span></div>
+        <div class="stat-box">已抽次數 <span id="totalDraws" class="stat-val">0</span></div>
+        <div class="stat-box">累計花費 <span id="totalCost" class="stat-val">$0</span></div>
     </div>
-    <div class="spinner-container" id="spinnerContainer"></div>
-    <p id="result" class="result-display">點擊上方按鈕進行抽獎！</p>
-    <p id="totalDraws">已抽次數：0</p>
-    <p id="totalCost">累積花費：0 元</p>
-    <p id="totalBalance">餘額：0 元</p>
-    <p id="totalAddedFunds">累積儲值：0 元</p>
-    <h2>抽獎紀錄</h2>
-    <div id="log"></div>
 
-    <!-- 回收視窗 -->
-    <div class="modal-backdrop" id="modalBackdrop"></div>
-    <div class="modal" id="recycleModal">
-        <h3>選擇想回收的獎項</h3>
-        <div id="recycleOptions"></div>
-        <div class="modal-buttons">
-            <p id="recycleTotal">總回收金額：0 元</p>
-            <button onclick="confirmRecycle()">確認回收</button>
-            <button onclick="closeRecycleModal()">取消</button>
+    <button class="secondary" onclick="document.getElementById('setup').classList.toggle('hidden')">⚙️ 設定獎項與機率</button>
+    
+    <div id="setup" class="settings-panel hidden">
+        <div class="setting-row" style="font-weight: bold; color: var(--accent-color);">
+            <span>獎項名稱</span><span>機率(%)</span><span>顏色碼</span><span>預覽</span>
+        </div>
+        <div id="prizeInputs">
+            </div>
+        <p style="font-size: 0.8rem; color: #94a3b8;">* 最後一項機率會自動補齊至 100%</p>
+        <div style="margin-top: 10px;">
+            單抽價格：<input type="number" id="inputPrice" value="35" style="width: 80px;" onchange="updateSettings()"> 元
         </div>
     </div>
 
-    <script>
-        const costPerDraw = 35;  // 每次抽獎的花費為 12 元
-        let totalDraws = 0;      // 累積抽獎次數
-        let totalCost = 0;       // 累積花費金額
-        let balance = 0;         // 餘額
-        let totalAddedFunds = 0; // 累積儲值金額
-        let winnings = [];       // 抽到的獎品清單
+    <div class="btn-group">
+        <button onclick="draw(1)">抽 1 次</button>
+        <button onclick="draw(3)">抽 3 次</button>
+        <button onclick="draw(10)">抽 10 次</button>
+        <button onclick="draw(50)">抽 50 次</button>
+    </div>
 
-        function confirmAddFunds(amount) {
-            const confirmResult = confirm(`是否儲值 ${amount} 元？`);
-            if (confirmResult) {
-                addFunds(amount);
+    <div class="spinner-container" id="spinnerContainer"></div>
+
+    <h3 style="text-align: left;">📜 中獎紀錄 (僅記錄大獎)</h3>
+    <div class="log-container" id="log">
+        <div style="color: #64748b; text-align: center;">尚未有中獎紀錄</div>
+    </div>
+</div>
+
+<script>
+    // 初始獎項設定
+    let prizeSettings = [
+        { name: "頭獎!!", prob: 0.1, color: "#ff4444" },
+        { name: "二獎", prob: 0.9, color: "#38bdf8" },
+        { name: "三獎", prob: 2.0, color: "#4ade80" },
+        { name: "普通獎", prob: 12.0, color: "#f8fafc" },
+        { name: "安慰獎", prob: 85.0, color: "#94a3b8" }
+    ];
+
+    let costPerDraw = 35;
+    let totalDraws = 0;
+    let totalCost = 0;
+
+    // 初始化輸入介面
+    function initSettingsUI() {
+        const container = document.getElementById('prizeInputs');
+        container.innerHTML = '';
+        prizeSettings.forEach((p, index) => {
+            const isLast = index === prizeSettings.length - 1;
+            container.innerHTML += `
+                <div class="setting-row">
+                    <input type="text" value="${p.name}" onchange="updateSettings(${index}, 'name', this.value)">
+                    <input type="number" value="${p.prob}" ${isLast ? 'disabled' : ''} onchange="updateSettings(${index}, 'prob', this.value)">
+                    <input type="text" value="${p.color}" onchange="updateSettings(${index}, 'color', this.value)">
+                    <span style="color: ${p.color}; font-weight: bold;">■</span>
+                </div>
+            `;
+        });
+        document.getElementById('priceDisplay').innerText = `$${costPerDraw}`;
+    }
+
+    // 更新設定
+    function updateSettings(index, key, value) {
+        if (index !== undefined) {
+            if (key === 'prob') prizeSettings[index][key] = parseFloat(value);
+            else prizeSettings[index][key] = value;
+        }
+        
+        costPerDraw = parseInt(document.getElementById('inputPrice').value);
+        
+        // 重新計算最後一項的機率
+        let currentTotal = 0;
+        for (let i = 0; i < prizeSettings.length - 1; i++) {
+            currentTotal += prizeSettings[i].prob;
+        }
+        prizeSettings[prizeSettings.length - 1].prob = Math.max(0, 100 - currentTotal).toFixed(2) * 1;
+        
+        initSettingsUI();
+    }
+
+    // 隨機抽選邏輯
+    function getPrize() {
+        let rand = Math.random() * 100;
+        let cumulative = 0;
+        for (let p of prizeSettings) {
+            cumulative += p.prob;
+            if (rand < cumulative) return p;
+        }
+        return prizeSettings[prizeSettings.length - 1];
+    }
+
+    // 執行抽獎
+    async function draw(times) {
+        const container = document.getElementById('spinnerContainer');
+        container.innerHTML = '';
+        totalDraws += times;
+        totalCost += times * costPerDraw;
+
+        // 更新統計
+        document.getElementById('totalDraws').innerText = totalDraws;
+        document.getElementById('totalCost').innerText = `$${totalCost}`;
+
+        for (let i = 0; i < times; i++) {
+            const targetPrize = getPrize();
+            
+            // 建立轉盤
+            const spinner = document.createElement('div');
+            spinner.className = 'spinner';
+            const content = document.createElement('div');
+            content.className = 'spinner-content';
+            
+            // 隨機填充 10 個假的項目增加滾動感
+            const fakeCount = 10;
+            for(let j=0; j<fakeCount; j++) {
+                const fake = prizeSettings[Math.floor(Math.random()*prizeSettings.length)];
+                content.innerHTML += `<div class="spinner-item" style="color:${fake.color}">${fake.name}</div>`;
+            }
+            // 最後一個是真正結果
+            content.innerHTML += `<div class="spinner-item" style="color:${targetPrize.color}">${targetPrize.name}</div>`;
+            
+            spinner.appendChild(content);
+            container.appendChild(spinner);
+
+            // 觸發動畫
+            setTimeout(() => {
+                content.style.transform = `translateY(-${fakeCount * 50}px)`;
+            }, i * 50); // 逐個啟動動畫
+
+            // 紀錄大獎
+            if (targetPrize.prob < 5) { // 機率小於 5% 的視為大獎紀錄
+                addLog(targetPrize);
             }
         }
+    }
 
-        function addFunds(amount) {
-            balance += amount;
-            totalAddedFunds += amount;
-            document.getElementById("totalBalance").textContent = `餘額：${balance} 元`;
-            document.getElementById("totalAddedFunds").textContent = `累積儲值：${totalAddedFunds} 元`;
-        }
+    function addLog(prize) {
+        const log = document.getElementById('log');
+        if (log.innerHTML.includes('尚未有中獎紀錄')) log.innerHTML = '';
+        
+        const time = new Date().toLocaleTimeString();
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        item.innerHTML = `<span style="color: #64748b;">[${time}]</span> 恭喜抽中 <span style="color:${prize.color}; font-weight:bold;">${prize.name}</span>`;
+        log.prepend(item);
+    }
 
-        function drawPrize() {
-            const prizes = [
-                { name: "頭獎!!", probability: 0.0005, cssClass: "grandPrize", value: 20000 },
-                { name: "二獎", probability: 0.001, cssClass: "secondPrize", value: 1000 },
-                { name: "三獎", probability: 0.010, cssClass: "thirdPrize", value: 300 },
-                { name: "普通獎", probability: 0.06, cssClass: "normalPrize", value: 35 },
-                { name: "安慰獎", probability: 0.9465, cssClass: "consolationPrize", value: 0 }
-            ];
+    // 初始化介面
+    initSettingsUI();
+</script>
 
-            let randomNumber = Math.random();
-            let cumulativeProbability = 0;
-
-            for (let prize of prizes) {
-                cumulativeProbability += prize.probability;
-                if (randomNumber < cumulativeProbability) {
-                    return prize;
-                }
-            }
-            return prizes[prizes.length - 1];
-        }
-
-        async function drawMultiple(times) {
-            if (balance < times * costPerDraw) {
-                alert("餘額不足，請儲值！");
-                return;
-            }
-
-            const spinnerContainer = document.getElementById("spinnerContainer");
-            spinnerContainer.innerHTML = "";
-            const resultDisplay = document.getElementById("result");
-            resultDisplay.innerHTML = "正在抽獎中...";
-            let results = [];
-
-            balance -= times * costPerDraw;
-            totalDraws += times;
-            totalCost += times * costPerDraw;
-
-            for (let i = 0; i < times; i++) {
-                const spinner = document.createElement("div");
-                spinner.classList.add("spinner");
-                spinner.id = `spinner${i}`;
-                spinner.innerHTML = `
-                    <div id="spinnerContent${i}">
-                        <span>頭獎</span>
-                        <span>二獎</span>
-                        <span>三獎</span>
-                        <span>普通獎</span>
-                        <span>安慰獎</span>
-                    </div>
-                `;
-                spinnerContainer.appendChild(spinner);
-
-                (function(index) {
-                    setTimeout(async () => {
-                        const prize = drawPrize();
-                        const spinnerContent = document.getElementById(`spinnerContent${index}`);
-                        spinnerContent.classList.add("animate");
-                        await new Promise(resolve => setTimeout(resolve, 350));
-                        spinnerContent.classList.remove("animate");
-
-                        spinner.innerHTML = `<span class="${prize.cssClass}">${prize.name}</span>`;
-                        winnings.push(prize);
-                        results.push(prize.name);
-
-                        if (prize.name !== "安慰獎") {
-                            addLogEntry(prize);
-                        }
-
-                        if (results.length === times) {
-                            resultDisplay.innerHTML = `抽獎完成！`;
-                            document.getElementById("totalDraws").textContent = "已抽次數：" + totalDraws;
-                            document.getElementById("totalCost").textContent = "累積花費：" + totalCost + " 元";
-                            document.getElementById("totalBalance").textContent = `餘額：${balance} 元`;
-                        }
-                    }, i * 80);
-                })(i);
-            }
-        }
-
-        function addLogEntry(prize) {
-            const now = new Date();
-            const dateString = now.toLocaleString();
-            const logEntry = document.createElement("div");
-
-            logEntry.innerHTML = `${dateString} - <span class="${prize.cssClass}">${prize.name}</span>`;
-            document.getElementById("log").prepend(logEntry);
-        }
-
-        function openRecycleModal() {
-            if (winnings.length === 0) {
-                alert("無東西可回收！");
-                return;
-            }
-
-            const modal = document.getElementById("recycleModal");
-            const backdrop = document.getElementById("modalBackdrop");
-            const optionsContainer = document.getElementById("recycleOptions");
-
-            optionsContainer.innerHTML = '<label><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"> 全選</label><br>';
-            winnings.forEach((prize, index) => {
-                if (prize.value > 0) {
-                    optionsContainer.innerHTML += `
-                        <label>
-                            <input type="checkbox" class="recycleOption" value="${index}">
-                            ${prize.name} (${prize.value} 元)
-                        </label><br>
-                    `;
-                }
-            });
-
-            updateRecycleTotal();
-            modal.style.display = "block";
-            backdrop.style.display = "block";
-        }
-
-        function toggleSelectAll(checkbox) {
-            const options = document.querySelectorAll(".recycleOption");
-            options.forEach(option => {
-                option.checked = checkbox.checked;
-            });
-            updateRecycleTotal();
-        }
-
-        function updateRecycleTotal() {
-            const options = document.querySelectorAll(".recycleOption:checked");
-            let total = 0;
-
-            options.forEach(option => {
-                const prize = winnings[parseInt(option.value)];
-                total += prize.value;
-            });
-
-            document.getElementById("recycleTotal").textContent = `總回收金額：${total} 元`;
-        }
-
-        function confirmRecycle() {
-            const options = document.querySelectorAll(".recycleOption:checked");
-            let total = 0;
-
-            const newWinnings = [];
-            winnings.forEach((prize, index) => {
-                if (![...options].some(option => parseInt(option.value) === index)) {
-                    newWinnings.push(prize);
-                } else {
-                    total += prize.value;
-                }
-            });
-
-            balance += total;
-            winnings = newWinnings;
-            document.getElementById("log").innerHTML = ""; // 清空紀錄
-            winnings.forEach(prize => {
-                if (prize.name !== "安慰獎") {
-                    addLogEntry(prize);
-                }
-            });
-
-            document.getElementById("totalBalance").textContent = `餘額：${balance} 元`;
-            closeRecycleModal();
-            alert(`已成功回收 ${total} 元！`);
-        }
-
-        function closeRecycleModal() {
-            const modal = document.getElementById("recycleModal");
-            const backdrop = document.getElementById("modalBackdrop");
-            modal.style.display = "none";
-            backdrop.style.display = "none";
-        }
-    </script>
 </body>
 </html>
