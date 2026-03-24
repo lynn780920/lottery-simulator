@@ -3,301 +3,541 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高級抽獎模擬器 V2</title>
+    <title>高級抽獎模擬器 V2.1 - 專業機率分析</title>
+    <!-- 使用 Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --accent-color: #38bdf8;
+            --bg-dark: #0f172a;
+            --card-dark: #1e293b;
+            --accent-blue: #38bdf8;
+            --accent-gold: #fbbf24;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --success: #22c55e;
+            --danger: #ef4444;
         }
+
+        * { box-sizing: border-box; }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Noto Sans TC', sans-serif;
             margin: 0;
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            justify-content: center;
             min-height: 100vh;
+            line-height: 1.6;
         }
 
-        .container {
-            max-width: 800px;
-            width: 95%;
-            padding: 20px;
+        .app-container {
+            width: 100%;
+            max-width: 900px;
+            padding: 24px;
+        }
+
+        header {
             text-align: center;
+            margin-bottom: 32px;
         }
 
-        h1 { font-style: italic; color: var(--accent-color); text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
-
-        /* 設定區塊樣式 */
-        .settings-panel {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid #334155;
-            text-align: left;
+        h1 {
+            font-size: 2rem;
+            margin: 0;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
         }
-        
-        .setting-row {
+
+        /* 統計面板 */
+        .stats-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--card-dark);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-label { font-size: 0.85rem; color: var(--text-muted); display: block; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--accent-gold); margin-top: 4px; }
+
+        /* 設定面板 */
+        .panel {
+            background: var(--card-dark);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .panel-title { font-size: 1.1rem; font-weight: 700; color: var(--accent-blue); }
+
+        .prize-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 40px;
             gap: 10px;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             align-items: center;
         }
 
         input {
             background: #0f172a;
-            border: 1px solid #475569;
+            border: 1px solid var(--border-color);
             color: white;
-            padding: 5px;
-            border-radius: 4px;
+            padding: 8px 12px;
+            border-radius: 6px;
             width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
         }
 
-        /* 按鈕樣式 */
-        .btn-group { margin: 20px 0; }
-        button {
+        input:focus { border-color: var(--accent-blue); }
+
+        /* 按鈕風格 */
+        .btn {
             cursor: pointer;
-            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-            color: white;
             border: none;
-            padding: 10px 20px;
-            margin: 5px;
             border-radius: 8px;
-            font-weight: bold;
-            transition: 0.2s;
+            padding: 10px 18px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
-        button:hover { transform: scale(1.05); filter: brightness(1.2); }
-        button.secondary { background: #475569; }
 
-        /* 統計區 */
-        .stats {
+        .btn-primary { background: var(--accent-blue); color: #000; }
+        .btn-primary:hover { background: #7dd3fc; transform: translateY(-1px); }
+        
+        .btn-secondary { background: #334155; color: white; }
+        .btn-secondary:hover { background: #475569; }
+
+        .btn-danger { background: #ef444422; color: #ef4444; border: 1px solid #ef444444; }
+        .btn-danger:hover { background: #ef4444; color: white; }
+
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); }
+        .btn-outline:hover { color: white; border-color: var(--text-muted); }
+
+        /* 抽獎動作區 */
+        .draw-actions {
             display: flex;
-            justify-content: space-around;
-            background: rgba(255,255,255,0.05);
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 24px;
         }
-        .stat-box { font-size: 0.9rem; color: #94a3b8; }
-        .stat-val { display: block; font-size: 1.2rem; color: #fbbf24; font-weight: bold; }
 
-        /* 抽獎轉盤顯示區 */
-        .spinner-container {
+        /* 轉盤視覺區 */
+        .draw-display {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
-            min-height: 60px;
+            gap: 12px;
+            min-height: 100px;
+            margin-bottom: 32px;
         }
 
-        .spinner {
-            width: 120px;
-            height: 50px;
-            border: 2px solid #38bdf8;
-            border-radius: 8px;
-            overflow: hidden;
+        .slot-machine {
+            width: 140px;
+            height: 60px;
             background: #000;
+            border: 2px solid var(--accent-blue);
+            border-radius: 10px;
             position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
         }
 
-        .spinner-content {
+        .slot-track {
             display: flex;
             flex-direction: column;
-            transition: transform 1.5s cubic-bezier(0.15, 0.85, 0.35, 1);
+            transition: transform 2s cubic-bezier(0.15, 0.85, 0.35, 1.05);
         }
 
-        .spinner-item {
-            height: 50px;
-            line-height: 50px;
-            text-align: center;
-            font-weight: bold;
+        .slot-item {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1rem;
+            text-shadow: 0 0 8px rgba(0,0,0,0.5);
             flex-shrink: 0;
         }
 
         /* 紀錄區 */
-        .log-container {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 15px;
-            max-height: 300px;
-            overflow-y: auto;
-            text-align: left;
-        }
-        .log-item {
-            border-bottom: 1px solid #334155;
-            padding: 5px 0;
-            font-size: 0.85rem;
+        .logs-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
         }
 
+        .log-box {
+            background: var(--card-dark);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .log-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .log-entry {
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            border-left: 4px solid transparent;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .log-time { color: var(--text-muted); margin-right: 8px; font-size: 0.8rem; }
+
         .hidden { display: none; }
+        
+        /* 捲軸美化 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        @media (max-width: 600px) {
+            .prize-row { grid-template-columns: 1fr 1fr 1fr 40px; }
+            .prize-row span { display: none; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>🏆 高級抽獎模擬器</h1>
+<div class="app-container">
+    <header>
+        <h1>🏆 高級抽獎模擬器 V2.1</h1>
+        <p style="color: var(--text-muted);">專業級機率演算與視覺模擬系統</p>
+    </header>
 
-    <div class="stats">
-        <div class="stat-box">單次花費 <span id="priceDisplay" class="stat-val">$35</span></div>
-        <div class="stat-box">已抽次數 <span id="totalDraws" class="stat-val">0</span></div>
-        <div class="stat-box">累計花費 <span id="totalCost" class="stat-val">$0</span></div>
+    <!-- 數據統計 -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-label">累積抽數</span>
+            <span class="stat-value" id="totalDraws">0</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">總消耗金額</span>
+            <span class="stat-value" id="totalCost">$0</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">大獎獲得數</span>
+            <span class="stat-value" id="rareCount">0</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">大獎機率</span>
+            <span class="stat-value" id="luckRate">0%</span>
+        </div>
     </div>
 
-    <button class="secondary" onclick="document.getElementById('setup').classList.toggle('hidden')">⚙️ 設定獎項與機率</button>
-    
-    <div id="setup" class="settings-panel hidden">
-        <div class="setting-row" style="font-weight: bold; color: var(--accent-color);">
-            <span>獎項名稱</span><span>機率(%)</span><span>顏色碼</span><span>預覽</span>
-        </div>
-        <div id="prizeInputs">
+    <!-- 設定區域 -->
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title">⚙️ 機率與獎項配置</span>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-outline" onclick="addPrize()">＋ 新增獎項</button>
+                <button class="btn btn-secondary" onclick="toggleSetup()">收合/展開</button>
             </div>
-        <p style="font-size: 0.8rem; color: #94a3b8;">* 最後一項機率會自動補齊至 100%</p>
-        <div style="margin-top: 10px;">
-            單抽價格：<input type="number" id="inputPrice" value="35" style="width: 80px;" onchange="updateSettings()"> 元
+        </div>
+        
+        <div id="setup-body">
+            <div class="prize-row" style="color: var(--text-muted); font-size: 0.8rem; padding: 0 10px;">
+                <div>獎項名稱</div><div>機率 (%)</div><div>顏色碼</div><div></div>
+            </div>
+            <div id="prizeInputs">
+                <!-- 動態插入 -->
+            </div>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    單抽價格：<input type="number" id="priceInput" value="35" style="width: 80px;" onchange="syncData()"> 元
+                </div>
+                <div style="font-size: 0.85rem; color: var(--accent-gold);" id="probCheck">
+                    剩餘機率：100%
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="btn-group">
-        <button onclick="draw(1)">抽 1 次</button>
-        <button onclick="draw(3)">抽 3 次</button>
-        <button onclick="draw(10)">抽 10 次</button>
-        <button onclick="draw(50)">抽 50 次</button>
+    <!-- 抽獎動作 -->
+    <div class="draw-actions">
+        <button class="btn btn-primary" onclick="executeDraw(1)">單抽 (1)</button>
+        <button class="btn btn-primary" onclick="executeDraw(10)">十連抽 (10)</button>
+        <button class="btn btn-primary" onclick="executeDraw(50)">五十抽 (50)</button>
+        <button class="btn btn-secondary" onclick="resetStats()">重置數據</button>
     </div>
 
-    <div class="spinner-container" id="spinnerContainer"></div>
+    <!-- 視覺模擬區 -->
+    <div class="draw-display" id="displayArea">
+        <!-- 抽獎動畫物件 -->
+    </div>
 
-    <h3 style="text-align: left;">📜 中獎紀錄 (僅記錄大獎)</h3>
-    <div class="log-container" id="log">
-        <div style="color: #64748b; text-align: center;">尚未有中獎紀錄</div>
+    <!-- 紀錄區域 -->
+    <div class="logs-section">
+        <div class="log-box">
+            <div class="log-header">
+                <span style="font-weight: 700;">📜 歷史獲獎紀錄 (稀有機率 < 5%)</span>
+                <button class="btn btn-outline" style="padding: 4px 8px; font-size: 0.7rem;" onclick="clearLog()">清除</button>
+            </div>
+            <div class="log-content" id="logContent">
+                <div style="text-align: center; color: var(--text-muted); margin-top: 20px;">暫無重要獲獎紀錄</div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    // 初始獎項設定
-    let prizeSettings = [
-        { name: "頭獎!!", prob: 0.1, color: "#ff4444" },
-        { name: "二獎", prob: 0.9, color: "#38bdf8" },
-        { name: "三獎", prob: 2.0, color: "#4ade80" },
-        { name: "普通獎", prob: 12.0, color: "#f8fafc" },
-        { name: "安慰獎", prob: 85.0, color: "#94a3b8" }
+    // --- 核心狀態 ---
+    let prizes = [
+        { id: 1, name: "極稀有：SSR 頭獎", prob: 0.5, color: "#f59e0b" },
+        { id: 2, name: "稀有：SR 二獎", prob: 2.5, color: "#a855f7" },
+        { id: 3, name: "優質：R 三獎", prob: 12.0, color: "#3b82f6" },
+        { id: 4, name: "普通獎", prob: 35.0, color: "#4ade80" },
+        { id: 5, name: "安慰獎", prob: 50.0, color: "#94a3b8" }
     ];
 
-    let costPerDraw = 35;
-    let totalDraws = 0;
-    let totalCost = 0;
+    let stats = {
+        total: 0,
+        cost: 0,
+        rare: 0,
+        price: 35
+    };
 
-    // 初始化輸入介面
-    function initSettingsUI() {
+    // --- 初始化 ---
+    function init() {
+        renderPrizeInputs();
+        updateStatDisplay();
+    }
+
+    // --- 渲染 UI ---
+    function renderPrizeInputs() {
         const container = document.getElementById('prizeInputs');
         container.innerHTML = '';
-        prizeSettings.forEach((p, index) => {
-            const isLast = index === prizeSettings.length - 1;
-            container.innerHTML += `
-                <div class="setting-row">
-                    <input type="text" value="${p.name}" onchange="updateSettings(${index}, 'name', this.value)">
-                    <input type="number" value="${p.prob}" ${isLast ? 'disabled' : ''} onchange="updateSettings(${index}, 'prob', this.value)">
-                    <input type="text" value="${p.color}" onchange="updateSettings(${index}, 'color', this.value)">
-                    <span style="color: ${p.color}; font-weight: bold;">■</span>
-                </div>
+        
+        prizes.forEach((p, idx) => {
+            const row = document.createElement('div');
+            row.className = 'prize-row';
+            row.innerHTML = `
+                <input type="text" value="${p.name}" oninput="updatePrizeData(${idx}, 'name', this.value)">
+                <input type="number" step="0.01" value="${p.prob}" oninput="updatePrizeData(${idx}, 'prob', this.value)">
+                <input type="text" value="${p.color}" oninput="updatePrizeData(${idx}, 'color', this.value)">
+                <button class="btn btn-danger" style="padding: 4px;" onclick="removePrize(${idx})">✕</button>
             `;
+            container.appendChild(row);
         });
-        document.getElementById('priceDisplay').innerText = `$${costPerDraw}`;
+        
+        checkProbability();
     }
 
-    // 更新設定
-    function updateSettings(index, key, value) {
-        if (index !== undefined) {
-            if (key === 'prob') prizeSettings[index][key] = parseFloat(value);
-            else prizeSettings[index][key] = value;
-        }
-        
-        costPerDraw = parseInt(document.getElementById('inputPrice').value);
-        
-        // 重新計算最後一項的機率
-        let currentTotal = 0;
-        for (let i = 0; i < prizeSettings.length - 1; i++) {
-            currentTotal += prizeSettings[i].prob;
-        }
-        prizeSettings[prizeSettings.length - 1].prob = Math.max(0, 100 - currentTotal).toFixed(2) * 1;
-        
-        initSettingsUI();
+    function toggleSetup() {
+        document.getElementById('setup-body').classList.toggle('hidden');
     }
 
-    // 隨機抽選邏輯
-    function getPrize() {
+    // --- 數據處理 ---
+    function addPrize() {
+        prizes.push({ id: Date.now(), name: "新獎項", prob: 0, color: "#ffffff" });
+        renderPrizeInputs();
+    }
+
+    function removePrize(idx) {
+        if (prizes.length <= 1) return;
+        prizes.splice(idx, 1);
+        renderPrizeInputs();
+    }
+
+    function updatePrizeData(idx, key, val) {
+        if (key === 'prob') {
+            prizes[idx][key] = parseFloat(val) || 0;
+            checkProbability();
+        } else {
+            prizes[idx][key] = val;
+        }
+    }
+
+    function checkProbability() {
+        const total = prizes.reduce((sum, p) => sum + p.prob, 0);
+        const display = document.getElementById('probCheck');
+        display.innerText = `總機率計：${total.toFixed(2)}%`;
+        display.style.color = Math.abs(total - 100) < 0.01 ? '#22c55e' : '#ef4444';
+        return total;
+    }
+
+    function syncData() {
+        stats.price = parseInt(document.getElementById('priceInput').value) || 0;
+    }
+
+    function updateStatDisplay() {
+        document.getElementById('totalDraws').innerText = stats.total.toLocaleString();
+        document.getElementById('totalCost').innerText = `$${stats.cost.toLocaleString()}`;
+        document.getElementById('rareCount').innerText = stats.rare.toLocaleString();
+        const rate = stats.total > 0 ? ((stats.rare / stats.total) * 100).toFixed(2) : 0;
+        document.getElementById('luckRate').innerText = `${rate}%`;
+    }
+
+    // --- 抽獎邏輯 ---
+    function getRandPrize() {
         let rand = Math.random() * 100;
         let cumulative = 0;
-        for (let p of prizeSettings) {
+        for (let p of prizes) {
             cumulative += p.prob;
             if (rand < cumulative) return p;
         }
-        return prizeSettings[prizeSettings.length - 1];
+        return prizes[prizes.length - 1]; // 保險返回
     }
 
-    // 執行抽獎
-    async function draw(times) {
-        const container = document.getElementById('spinnerContainer');
-        container.innerHTML = '';
-        totalDraws += times;
-        totalCost += times * costPerDraw;
+    async function executeDraw(times) {
+        if (checkProbability() <= 0) {
+            alert("請先設定正確的獎項機率！");
+            return;
+        }
 
-        // 更新統計
-        document.getElementById('totalDraws').innerText = totalDraws;
-        document.getElementById('totalCost').innerText = `$${totalCost}`;
+        const display = document.getElementById('displayArea');
+        display.innerHTML = ''; // 清除舊的
+
+        // 批次更新數據
+        stats.total += times;
+        stats.cost += times * stats.price;
+
+        // 一次最多顯示 10 個動畫，避免效能問題，但數據照算
+        const visualLimit = Math.min(times, 10);
 
         for (let i = 0; i < times; i++) {
-            const targetPrize = getPrize();
+            const result = getRandPrize();
             
-            // 建立轉盤
-            const spinner = document.createElement('div');
-            spinner.className = 'spinner';
-            const content = document.createElement('div');
-            content.className = 'spinner-content';
-            
-            // 隨機填充 10 個假的項目增加滾動感
-            const fakeCount = 10;
-            for(let j=0; j<fakeCount; j++) {
-                const fake = prizeSettings[Math.floor(Math.random()*prizeSettings.length)];
-                content.innerHTML += `<div class="spinner-item" style="color:${fake.color}">${fake.name}</div>`;
+            // 紀錄稀有獎
+            if (result.prob < 5) {
+                stats.rare++;
+                addLog(result);
             }
-            // 最後一個是真正結果
-            content.innerHTML += `<div class="spinner-item" style="color:${targetPrize.color}">${targetPrize.name}</div>`;
-            
-            spinner.appendChild(content);
-            container.appendChild(spinner);
 
-            // 觸發動畫
-            setTimeout(() => {
-                content.style.transform = `translateY(-${fakeCount * 50}px)`;
-            }, i * 50); // 逐個啟動動畫
-
-            // 紀錄大獎
-            if (targetPrize.prob < 5) { // 機率小於 5% 的視為大獎紀錄
-                addLog(targetPrize);
+            // 動態效果 (僅限視覺限制內)
+            if (i < visualLimit) {
+                createSlot(result, i * 100);
             }
         }
-    }
-
-    function addLog(prize) {
-        const log = document.getElementById('log');
-        if (log.innerHTML.includes('尚未有中獎紀錄')) log.innerHTML = '';
         
-        const time = new Date().toLocaleTimeString();
-        const item = document.createElement('div');
-        item.className = 'log-item';
-        item.innerHTML = `<span style="color: #64748b;">[${time}]</span> 恭喜抽中 <span style="color:${prize.color}; font-weight:bold;">${prize.name}</span>`;
-        log.prepend(item);
+        if (times > visualLimit) {
+            const more = document.createElement('div');
+            more.style.cssText = "color: var(--text-muted); width: 100%; text-align: center; margin-top: 10px;";
+            more.innerText = `... 及其他 ${times - visualLimit} 個結果已處理`;
+            display.appendChild(more);
+        }
+
+        updateStatDisplay();
     }
 
-    // 初始化介面
-    initSettingsUI();
+    function createSlot(target, delay) {
+        const display = document.getElementById('displayArea');
+        
+        const machine = document.createElement('div');
+        machine.className = 'slot-machine';
+        
+        const track = document.createElement('div');
+        track.className = 'slot-track';
+        
+        // 隨機生成過渡項目
+        const itemsCount = 15;
+        for (let i = 0; i < itemsCount; i++) {
+            const p = prizes[Math.floor(Math.random() * prizes.length)];
+            const item = document.createElement('div');
+            item.className = 'slot-item';
+            item.style.color = p.color;
+            item.innerText = p.name;
+            track.appendChild(item);
+        }
+
+        // 最後一個是真正結果
+        const finalItem = document.createElement('div');
+        finalItem.className = 'slot-item';
+        finalItem.style.color = target.color;
+        finalItem.style.background = `${target.color}22`;
+        finalItem.innerText = target.name;
+        track.appendChild(finalItem);
+
+        machine.appendChild(track);
+        display.appendChild(machine);
+
+        // 啟動動畫
+        setTimeout(() => {
+            track.style.transform = `translateY(-${itemsCount * 60}px)`;
+        }, delay);
+    }
+
+    // --- 紀錄功能 ---
+    function addLog(prize) {
+        const logContainer = document.getElementById('logContent');
+        if (logContainer.innerText.includes('暫無重要獲獎紀錄')) {
+            logContainer.innerHTML = '';
+        }
+
+        const now = new Date();
+        const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+        
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.style.borderLeftColor = prize.color;
+        entry.innerHTML = `
+            <span class="log-time">[${timeStr}]</span>
+            獲得 <span style="color: ${prize.color}; font-weight: bold;">${prize.name}</span> 
+            <span style="color: var(--text-muted); font-size: 0.75rem;">(機率: ${prize.prob}%)</span>
+        `;
+        
+        logContainer.prepend(entry);
+    }
+
+    function clearLog() {
+        document.getElementById('logContent').innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 20px;">暫無重要獲獎紀錄</div>';
+    }
+
+    function resetStats() {
+        if (!confirm("確定要重置所有統計數據嗎？")) return;
+        stats.total = 0;
+        stats.cost = 0;
+        stats.rare = 0;
+        updateStatDisplay();
+        document.getElementById('displayArea').innerHTML = '';
+        clearLog();
+    }
+
+    // 啟動
+    window.onload = init;
 </script>
 
 </body>
