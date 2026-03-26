@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高級抽獎模擬器 V28 - 雙影片還原版</title>
+    <title>高級抽獎模擬器 V31 - 雙影片精確版</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -67,6 +67,7 @@
         .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; }
         .slot-box.win-top { border-color: var(--accent-gold); box-shadow: 0 0 20px var(--accent-gold); }
 
+        /* 影片播放層 */
         #foxVideoLayer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 5000; display: none; background: #000;
@@ -90,10 +91,9 @@
 </head>
 <body>
 
-<!-- 影片層 -->
 <div id="foxVideoLayer">
     <video id="winVideo" playsinline>
-        <source id="videoSrc" src="fox_win.mp4" type="video/mp4">
+        <source id="videoSrc" src="" type="video/mp4">
     </video>
 </div>
 
@@ -110,7 +110,7 @@
     <div class="boss-avatar">👨‍🎤</div>
     <div class="boss-main">
         <div class="boss-name">大魔王<span class="boss-lv">LV.99</span></div>
-        <div style="font-size: 0.8rem; opacity: 0.8;">到底是誰贏錢？</div>
+        <div style="font-size: 0.8rem; opacity: 0.8;">兩部影片特化版</div>
     </div>
 </div>
 
@@ -149,7 +149,6 @@
     </div>
 </div>
 
-<!-- Modal 區塊 -->
 <div id="settingsModal" class="modal-wrap"><div class="modal-body"><h3 style="color:var(--primary-pink); margin-top:0;">遊戲參數設定</h3><div style="margin-bottom:20px; font-weight:bold;">一抽價格：<input type="number" id="setPrice" style="width:80px; background:#000; color:var(--accent-gold); border:1px solid #444; padding:8px; border-radius:8px; text-align:center;"><span style="color:#666; margin-left:5px;">$</span></div><div class="setting-header-row"><div>名稱</div><div>機率%</div><div>價值$</div><div></div></div><div id="prizeEditList" class="prize-edit-list"></div><div class="prob-sum-box" id="probSumBox">目前機率總計：<span id="probSumText">0%</span></div><button class="btn-yellow" onclick="addNewPrize()">+ 新增獎項</button><button class="btn-pink" onclick="saveSettings()">儲存並關閉</button></div></div>
 <div id="rechargeModal" class="modal-wrap"><div class="modal-body" style="text-align:center;"><h2 style="color:var(--accent-gold)">儲值中心</h2><div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;"><button class="btn-pink" onclick="doRecharge(1000)">$1,000</button><button class="btn-pink" onclick="doRecharge(5000)">$5,000</button><button class="btn-pink" onclick="doRecharge(10000)">$10,000</button><button class="btn-pink" onclick="doRecharge(50000)">$50,000</button></div><button class="btn-dark" onclick="closeModal('rechargeModal')">返回遊戲</button></div></div>
 <div id="invModal" class="modal-wrap"><div class="modal-body"><h3 style="margin-top:0;">我的賞櫃</h3><div id="invList" style="max-height:280px; overflow-y:auto; background:rgba(0,0,0,0.3); border-radius:15px;"></div><div style="margin-top:20px; text-align:right; font-weight:900;">回收總價值：<span id="recycleVal" style="color:var(--accent-gold)">$0</span></div><button class="btn-yellow" style="margin-top:15px;" onclick="recycleAll()">一鍵回收 (100% 價值)</button><button class="btn-dark" onclick="closeModal('invModal')">關閉</button></div></div>
@@ -178,23 +177,19 @@
         renderMainGrid();
     }
 
-    // ✨ 支援雙部影片判定的播放邏輯
-    function playWinVideo(videoType) {
+    function playWinVideo(videoFile) {
         const layer = document.getElementById('foxVideoLayer');
         const video = document.getElementById('winVideo');
         const source = document.getElementById('videoSrc');
 
-        // 根據傳入的類型更換影片源
-        if (videoType === 'fox') {
-            source.src = "fox_win.mp4";
-        } else if (videoType === 'fairy') {
-            source.src = "fairy_win.mp4";
-        }
-
+        source.src = videoFile;
         layer.style.display = 'flex';
-        video.load(); // 重新載入新的 Source
+        video.load(); 
         video.currentTime = 0;
-        video.play();
+        video.play().catch(e => {
+            console.warn("自動播放受限", e);
+            layer.style.display = 'none';
+        });
         video.onended = () => { layer.style.display = 'none'; };
     }
 
@@ -211,10 +206,7 @@
 
         let anims = [];
         let winners = [];
-        
-        // 判定變數
-        let hasFox = false;
-        let hasFairy = false;
+        let playFile = "";
 
         for(let i=0; i<12; i++) {
             const slot = document.getElementById(`slot-${i}`);
@@ -223,9 +215,9 @@
                 state.totalCount++;
                 const winner = pickWinner();
                 
-                // ✨ 偵測名稱關鍵字來判定要播哪部影片
-                if(winner.name.includes("iPhone")) hasFox = true; 
-                if(winner.name.includes("PS5")) hasFairy = true; 
+                // ✨ 兩部影片判定邏輯
+                if(winner.name.includes("iPhone")) playFile = "fox_win.mp4"; 
+                if(winner.name.includes("PS5")) playFile = "legend_win.mp4"; 
 
                 winners.push({ winner, local: i+1, global: state.totalCount });
                 anims.push(runSlotAnim(i, winner));
@@ -236,11 +228,8 @@
             }
         }
 
-        // ✨ 偵測大獎播放影片 (iPhone播狐狸, PS5播仙女, 同時抽中以狐狸為優先)
-        if(hasFox) {
-            setTimeout(() => { playWinVideo('fox'); }, 1200);
-        } else if(hasFairy) {
-            setTimeout(() => { playWinVideo('fairy'); }, 1200);
+        if(playFile !== "") {
+            setTimeout(() => { playWinVideo(playFile); }, 1200);
         }
 
         await Promise.all(anims);
