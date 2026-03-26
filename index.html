@@ -161,8 +161,8 @@
         inventory: [],
         lastTimes: 1,
         prizes: [
-            { name: "iPhone 15 Pro", prob: 0.2, val: 36900, icon: "📱", isTop: true },
-            { name: "PS5 Slim", prob: 0.8, val: 17500, icon: "🎮", isTop: true },
+            { name: "iPhone 15 Pro (超神款)", prob: 0.2, val: 36900, icon: "📱", isTop: true },
+            { name: "PS5 Slim (傳說款)", prob: 0.8, val: 17500, icon: "🎮", isTop: true },
             { name: "AirPods Max", prob: 2.0, val: 18000, icon: "🎧", isTop: true },
             { name: "小米手環 8", prob: 12.0, val: 1095, icon: "⌚", isTop: false },
             { name: "行動電源", prob: 25.0, val: 790, icon: "🔋", isTop: false },
@@ -206,7 +206,10 @@
 
         let anims = [];
         let winners = [];
-        let playFile = "";
+        
+        // 用來決定播放哪部影片的標記
+        let hasUltraGod = false; // 超神款
+        let hasLegend = false;   // 傳說款
 
         for(let i=0; i<12; i++) {
             const slot = document.getElementById(`slot-${i}`);
@@ -215,9 +218,9 @@
                 state.totalCount++;
                 const winner = pickWinner();
                 
-                // ✨ 兩部影片判定邏輯
-                if(winner.name.includes("iPhone")) playFile = "fox_win.mp4"; 
-                if(winner.name.includes("PS5")) playFile = "legend_win.mp4"; 
+                // ✨ 新增判定邏輯
+                if(winner.name.includes("超神款")) hasUltraGod = true; 
+                else if(winner.name.includes("傳說款")) hasLegend = true; 
 
                 winners.push({ winner, local: i+1, global: state.totalCount });
                 anims.push(runSlotAnim(i, winner));
@@ -228,8 +231,13 @@
             }
         }
 
-        if(playFile !== "") {
-            setTimeout(() => { playWinVideo(playFile); }, 1200);
+        // ✨ 優先順序判定與執行播放
+        let finalPlayFile = "";
+        if(hasUltraGod) finalPlayFile = "fox_win.mp4";   // 優先狐狸戰士
+        else if(hasLegend) finalPlayFile = "fairy_win.mp4"; // 其次仙女
+
+        if(finalPlayFile !== "") {
+            setTimeout(() => { playWinVideo(finalPlayFile); }, 1200);
         }
 
         await Promise.all(anims);
