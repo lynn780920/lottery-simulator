@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高級抽獎模擬器 V23 - 狐仙影片特化版</title>
+    <title>高級抽獎模擬器 V24 - 雙神降臨版</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -15,7 +15,6 @@
             --text-gray: #b0b0b0;
         }
 
-        /* --- 原有樣式完全保留 --- */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body {
             background: var(--bg-dark);
@@ -29,6 +28,7 @@
             overflow-x: hidden;
         }
 
+        /* --- UI 佈局 --- */
         .header-nav { width: 100%; max-width: 500px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
         .balance-box { background: rgba(0, 0, 0, 0.6); border: 1.5px solid var(--primary-pink); padding: 6px 18px; border-radius: 25px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; font-weight: 900; }
         .balance-box span { color: var(--accent-gold); font-size: 1.1rem; }
@@ -52,13 +52,16 @@
         .lucky-list { max-height: 120px; overflow-y: auto; }
         .lucky-item { font-size: 0.75rem; color: #eee; margin-bottom: 8px; padding-left: 10px; border-left: 3px solid var(--primary-pink); }
 
+        /* --- 影片播放圖層 --- */
+        .video-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 5000; display: none; background: #000; justify-content: center; align-items: center; }
+        .video-overlay video { width: 100%; height: 100%; object-fit: contain; }
+
+        /* --- 抽獎控制區 --- */
         .draw-controls { position: fixed; bottom: 0; width: 100%; max-width: 500px; background: rgba(15, 7, 26, 0.95); backdrop-filter: blur(10px); display: flex; justify-content: space-around; align-items: center; padding: 15px 10px 35px; border-top: 1px solid rgba(255,255,255,0.1); z-index: 500; }
         .draw-btn-unit { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
         .draw-ball { width: 68px; height: 50px; border-radius: 30px; background: linear-gradient(180deg, #ff71c8 0%, #e6008e 100%); box-shadow: 0 4px 0 #b3006f; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 1.3rem; margin-bottom: 5px; position: relative; }
-        .draw-ball::after { content: ''; position: absolute; top: 15%; left: 20%; width: 30%; height: 20%; background: rgba(255,255,255,0.4); border-radius: 50%; }
         .draw-ball.purple { background: linear-gradient(180deg, #9b27af 0%, #691a99 100%); box-shadow: 0 4px 0 #4a136b; }
         .draw-btn-unit:active .draw-ball { transform: translateY(3px); box-shadow: 0 1px 0 #b3006f; }
-        .draw-price { font-size: 0.75rem; color: #888; }
 
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .slot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; background: rgba(255,255,255,0.03); padding: 20px; border-radius: 25px; border: 1px solid var(--primary-pink); margin-bottom: 30px; }
@@ -67,37 +70,21 @@
         .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; }
         .slot-box.win-top { border-color: var(--accent-gold); box-shadow: 0 0 20px var(--accent-gold); }
 
-        /* --- 修正後的影片圖層樣式 --- */
-        #foxVideoLayer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 5000; display: none; background: #000;
-            justify-content: center; align-items: center;
-        }
-        #foxVideoLayer video { width: 100%; height: 100%; object-fit: contain; }
-        /* ------------------------- */
-
+        /* --- Modal 樣式 --- */
         .modal-wrap { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: none; justify-content: center; align-items: center; }
         .modal-body { background: #1e0b33; width: 92%; max-width: 460px; border-radius: 30px; padding: 25px; border: 2.5px solid var(--primary-pink); position: relative; }
-        .setting-header-row { display: grid; grid-template-columns: 2fr 1fr 1.2fr 35px; gap: 8px; color: var(--accent-gold); font-size: 0.75rem; text-align: center; margin-bottom: 10px; }
-        .prize-edit-list { max-height: 280px; overflow-y: auto; margin-bottom: 15px; }
         .edit-row { display: grid; grid-template-columns: 2fr 1fr 1.2fr 35px; gap: 8px; margin-bottom: 10px; align-items: center; }
-        .edit-row input { background: #000; border: 1px solid #444; color: #fff; padding: 10px 5px; border-radius: 8px; font-size: 0.85rem; width: 100%; text-align: center; }
-        .del-btn { color: #f44336; font-size: 1.4rem; cursor: pointer; border: none; background: none; }
-        .prob-sum-box { background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-size: 0.85rem; }
-        .btn-yellow { background: var(--accent-gold); color: #000; width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 900; font-size: 1rem; cursor: pointer; margin-bottom: 12px; }
+        .edit-row input { background: #000; border: 1px solid #444; color: #fff; padding: 8px 5px; border-radius: 8px; font-size: 0.8rem; width: 100%; text-align: center; }
         .btn-pink { background: var(--primary-pink); color: #fff; width: 100%; padding: 14px; border-radius: 30px; border: none; font-weight: 900; font-size: 1.1rem; cursor: pointer; }
-        .btn-dark { background: #333; color: #fff; width: 100%; padding: 14px; border-radius: 30px; border: none; font-weight: 900; font-size: 1.1rem; cursor: pointer; margin-top: 10px; }
-        .inv-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .btn-yellow { background: var(--accent-gold); color: #000; width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 900; }
+        .btn-dark { background: #333; color: #fff; width: 100%; padding: 14px; border-radius: 30px; border: none; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <!-- 影片層 -->
-<div id="foxVideoLayer">
-    <video id="winVideo" playsinline>
-        <source src="fox_win.mp4" type="video/mp4">
-    </video>
-</div>
+<div id="godVideoLayer" class="video-overlay"><video id="godVideo" playsinline><source src="fox_win.mp4" type="video/mp4"></video></div>
+<div id="legendVideoLayer" class="video-overlay"><video id="legendVideo" playsinline><source src="legend_win.mp4" type="video/mp4"></video></div>
 
 <div class="header-nav">
     <div class="balance-box">餘額 <span id="balDisplay">$10,000</span></div>
@@ -112,38 +99,26 @@
     <div class="boss-avatar">👨‍🎤</div>
     <div class="boss-main">
         <div class="boss-name">大魔王<span class="boss-lv">LV.99</span></div>
-        <div style="font-size: 0.8rem; opacity: 0.8;">到底是誰贏錢？</div>
+        <div style="font-size: 0.8rem; opacity: 0.8;">自訂中獎動畫版</div>
     </div>
 </div>
 
 <div class="prize-grid" id="mainGrid"></div>
 
 <div class="lucky-box">
-    <div class="lucky-title">🏆 幸運頭獎紀錄</div>
+    <div class="lucky-title">🏆 幸運紀錄</div>
     <div class="lucky-list" id="luckyList">暫無中獎紀錄</div>
 </div>
 
 <div class="draw-controls">
-    <div class="draw-btn-unit" onclick="handleDraw(1)">
-        <div class="draw-ball">x1</div>
-        <div class="draw-price" id="p1_cost">$50</div>
-    </div>
-    <div class="draw-btn-unit" onclick="handleDraw(3)">
-        <div class="draw-ball">x3</div>
-        <div class="draw-price" id="p3_cost">$150</div>
-    </div>
-    <div class="draw-btn-unit" onclick="handleDraw(5)">
-        <div class="draw-ball">x5</div>
-        <div class="draw-price" id="p5_cost">$250</div>
-    </div>
-    <div class="draw-btn-unit" onclick="handleDraw(12)">
-        <div class="draw-ball purple">x12</div>
-        <div class="draw-price" id="p12_cost" style="color:var(--accent-gold)">$600</div>
-    </div>
+    <div class="draw-btn-unit" onclick="handleDraw(1)"><div class="draw-ball">x1</div><div class="draw-price" id="p1_cost">$50</div></div>
+    <div class="draw-btn-unit" onclick="handleDraw(3)"><div class="draw-ball">x3</div><div class="draw-price" id="p3_cost">$150</div></div>
+    <div class="draw-btn-unit" onclick="handleDraw(5)"><div class="draw-ball">x5</div><div class="draw-price" id="p5_cost">$250</div></div>
+    <div class="draw-btn-unit" onclick="handleDraw(12)"><div class="draw-ball purple">x12</div><div class="draw-price" id="p12_cost">$600</div></div>
 </div>
 
 <div id="drawOverlay" class="overlay">
-    <div style="color:var(--primary-pink); font-weight:900; font-size:1.3rem; margin-bottom:20px; letter-spacing:2px;">恭喜!!</div>
+    <div style="color:var(--primary-pink); font-weight:900; font-size:1.3rem; margin-bottom:20px;">中獎結果</div>
     <div class="slot-grid" id="slotGrid"></div>
     <div id="drawActions" style="display:none; width:85%; max-width:400px; gap:15px;">
         <button class="btn-dark" style="flex:1" onclick="closeDraw()">確認</button>
@@ -152,9 +127,27 @@
 </div>
 
 <!-- Modal 區塊 -->
-<div id="settingsModal" class="modal-wrap"><div class="modal-body"><h3 style="color:var(--primary-pink); margin-top:0;">遊戲參數設定</h3><div style="margin-bottom:20px; font-weight:bold;">一抽價格：<input type="number" id="setPrice" style="width:80px; background:#000; color:var(--accent-gold); border:1px solid #444; padding:8px; border-radius:8px; text-align:center;"><span style="color:#666; margin-left:5px;">$</span></div><div class="setting-header-row"><div>名稱</div><div>機率%</div><div>價值$</div><div></div></div><div id="prizeEditList" class="prize-edit-list"></div><div class="prob-sum-box" id="probSumBox">目前機率總計：<span id="probSumText">0%</span></div><button class="btn-yellow" onclick="addNewPrize()">+ 新增獎項</button><button class="btn-pink" onclick="saveSettings()">儲存並關閉</button></div></div>
-<div id="rechargeModal" class="modal-wrap"><div class="modal-body" style="text-align:center;"><h2 style="color:var(--accent-gold)">儲值中心</h2><div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;"><button class="btn-pink" onclick="doRecharge(1000)">$1,000</button><button class="btn-pink" onclick="doRecharge(5000)">$5,000</button><button class="btn-pink" onclick="doRecharge(10000)">$10,000</button><button class="btn-pink" onclick="doRecharge(50000)">$50,000</button></div><button class="btn-dark" onclick="closeModal('rechargeModal')">返回遊戲</button></div></div>
-<div id="invModal" class="modal-wrap"><div class="modal-body"><h3 style="margin-top:0;">我的賞櫃</h3><div id="invList" style="max-height:280px; overflow-y:auto; background:rgba(0,0,0,0.3); border-radius:15px;"></div><div style="margin-top:20px; text-align:right; font-weight:900;">回收總價值：<span id="recycleVal" style="color:var(--accent-gold)">$0</span></div><button class="btn-yellow" style="margin-top:15px;" onclick="recycleAll()">一鍵回收 (100% 價值)</button><button class="btn-dark" onclick="closeModal('invModal')">關閉</button></div></div>
+<div id="settingsModal" class="modal-wrap">
+    <div class="modal-body">
+        <h3 style="color:var(--primary-pink); margin:0 0 15px;">遊戲設定</h3>
+        <div style="margin-bottom:15px;">一抽價格：<input type="number" id="setPrice" style="width:70px;"></div>
+        <div id="prizeEditList" style="max-height:250px; overflow-y:auto; margin-bottom:10px;"></div>
+        <button class="btn-yellow" onclick="addNewPrize()">+ 新增獎項</button>
+        <button class="btn-pink" onclick="saveSettings()" style="margin-top:10px;">儲存並關閉</button>
+    </div>
+</div>
+
+<div id="rechargeModal" class="modal-wrap"><div class="modal-body" style="text-align:center;"><h2>儲值中心</h2><button class="btn-pink" onclick="doRecharge(10000)">儲值 $10,000</button><button class="btn-dark" onclick="closeModal('rechargeModal')">返回</button></div></div>
+
+<div id="invModal" class="modal-wrap">
+    <div class="modal-body">
+        <h3>我的賞櫃</h3>
+        <div id="invList" style="max-height:250px; overflow-y:auto; background:rgba(0,0,0,0.2); border-radius:10px;"></div>
+        <p>回收總額：<span id="recycleVal" style="color:var(--accent-gold)">$0</span></p>
+        <button class="btn-yellow" onclick="recycleAll()">一鍵回收</button>
+        <button class="btn-dark" onclick="closeModal('invModal')">關閉</button>
+    </div>
+</div>
 
 <script>
     let state = {
@@ -164,12 +157,11 @@
         inventory: [],
         lastTimes: 1,
         prizes: [
-            { name: "iPhone 15 Pro", prob: 0.2, val: 36900, icon: "📱", isTop: true },
-            { name: "PS5 Slim", prob: 0.8, val: 17500, icon: "🎮", isTop: true },
-            { name: "AirPods Max", prob: 2.0, val: 18000, icon: "🎧", isTop: true },
-            { name: "小米手環 8", prob: 12.0, val: 1095, icon: "⌚", isTop: false },
-            { name: "行動電源", prob: 25.0, val: 790, icon: "🔋", isTop: false },
-            { name: "造型貼紙", prob: 60.0, val: 50, icon: "🏷️", isTop: false }
+            { name: "狐仙超神款", prob: 0.1, val: 99999, icon: "🦊", isTop: true, rarity: "god" },
+            { name: "仙女傳說款", prob: 0.5, val: 50000, icon: "🧚‍♀️", isTop: true, rarity: "legend" },
+            { name: "iPhone 15", prob: 1.0, val: 30000, icon: "📱", isTop: true },
+            { name: "行動電源", prob: 20.0, val: 800, icon: "🔋", isTop: false },
+            { name: "造型貼紙", prob: 78.4, val: 50, icon: "🏷️", isTop: false }
         ]
     };
 
@@ -180,10 +172,9 @@
         renderMainGrid();
     }
 
-    // ✨ 修正後的影片播放邏輯
-    function playWinVideo() {
-        const layer = document.getElementById('foxVideoLayer');
-        const video = document.getElementById('winVideo');
+    function playVideo(type) {
+        const layer = document.getElementById(type === 'god' ? 'godVideoLayer' : 'legendVideoLayer');
+        const video = document.getElementById(type === 'god' ? 'godVideo' : 'legendVideo');
         layer.style.display = 'flex';
         video.currentTime = 0;
         video.play();
@@ -203,7 +194,7 @@
 
         let anims = [];
         let winners = [];
-        let hasTopPrize = false;
+        let bestRarity = null;
 
         for(let i=0; i<12; i++) {
             const slot = document.getElementById(`slot-${i}`);
@@ -211,20 +202,17 @@
             if(i < times) {
                 state.totalCount++;
                 const winner = pickWinner();
-                if(winner.isTop) hasTopPrize = true;
                 winners.push({ winner, local: i+1, global: state.totalCount });
                 anims.push(runSlotAnim(i, winner));
                 slot.style.opacity = "1";
+                if(winner.rarity === 'god') bestRarity = 'god';
+                else if(winner.rarity === 'legend' && bestRarity !== 'god') bestRarity = 'legend';
             } else {
-                slot.style.opacity = "0.05";
-                document.getElementById(`strip-${i}`).innerHTML = '';
+                slot.style.opacity = "0.1";
             }
         }
 
-        // ✨ 偵測大獎播放影片
-        if(hasTopPrize) {
-            setTimeout(() => { playWinVideo(); }, 1200);
-        }
+        if(bestRarity) setTimeout(() => playVideo(bestRarity), 1200);
 
         await Promise.all(anims);
         winners.forEach(w => {
@@ -234,37 +222,10 @@
         document.getElementById('drawActions').style.display = 'flex';
     }
 
-    // --- 其餘功能與 V23 原始邏輯完全一致 ---
-    function updateUI() {
-        document.getElementById('balDisplay').innerText = `$${state.balance.toLocaleString()}`;
-        document.getElementById('p1_cost').innerText = `$${state.price}`;
-        document.getElementById('p3_cost').innerText = `$${state.price * 3}`;
-        document.getElementById('p5_cost').innerText = `$${state.price * 5}`;
-        document.getElementById('p12_cost').innerText = `$${state.price * 12}`;
-        document.getElementById('setPrice').value = state.price;
-    }
-    function renderMainGrid() {
-        const grid = document.getElementById('mainGrid');
-        grid.innerHTML = state.prizes.map(p => `<div class="prize-card"><span class="prize-icon">${p.icon}</span><div class="prize-name">${p.name}</div><div class="prize-val">$${p.val}</div></div>`).join('');
-    }
-    function renderEditor() {
-        const list = document.getElementById('prizeEditList');
-        list.innerHTML = state.prizes.map((p, i) => `<div class="edit-row"><input type="text" value="${p.name}" oninput="state.prizes[${i}].name=this.value"><input type="number" step="0.01" value="${p.prob}" oninput="state.prizes[${i}].prob=parseFloat(this.value)||0; calcProbSum();"><input type="number" value="${p.val}" oninput="state.prizes[${i}].val=parseInt(this.value)||0"><button class="del-btn" onclick="removePrize(${i})">×</button></div>`).join('');
-        calcProbSum();
-    }
-    function calcProbSum() {
-        const sum = state.prizes.reduce((s, p) => s + p.prob, 0);
-        const text = document.getElementById('probSumText');
-        text.innerText = sum.toFixed(2) + '%';
-        text.style.color = (Math.abs(sum - 100) < 0.01) ? "#4caf50" : "#f44336";
-    }
-    function addNewPrize() { state.prizes.push({ name: "新獎項", prob: 0, val: 0, icon: "🎁", isTop: false }); renderEditor(); }
-    function removePrize(i) { state.prizes.splice(i, 1); renderEditor(); }
-    function saveSettings() { state.price = parseInt(document.getElementById('setPrice').value) || 50; state.prizes.forEach(p => p.isTop = p.val > 5000); updateUI(); renderMainGrid(); closeModal('settingsModal'); }
     function runSlotAnim(idx, winner) {
         return new Promise(resolve => {
             const strip = document.getElementById(`strip-${idx}`);
-            const pool = 35;
+            const pool = 30;
             let html = '';
             for(let i=0; i<pool; i++) {
                 const rp = state.prizes[Math.floor(Math.random()*state.prizes.length)];
@@ -272,24 +233,80 @@
             }
             html += `<div class="slot-item">${winner.icon}</div>`;
             strip.style.transition = 'none'; strip.style.transform = 'translateY(0)'; strip.innerHTML = html; strip.offsetHeight;
-            setTimeout(() => { strip.style.transition = 'transform 2.8s cubic-bezier(0.1, 0, 0.1, 1)'; strip.style.transform = `translateY(-${pool * 90}px)`; }, 50);
-            setTimeout(() => { if(winner.isTop) document.getElementById(`slot-${idx}`).classList.add('win-top'); resolve(); }, 2900 + (idx * 80));
+            setTimeout(() => { 
+                strip.style.transition = 'transform 2.5s cubic-bezier(0.1, 0, 0.1, 1)'; 
+                strip.style.transform = `translateY(-${pool * 90}px)`; 
+            }, 50);
+            setTimeout(() => { 
+                if(winner.isTop) document.getElementById(`slot-${idx}`).classList.add('win-top'); 
+                resolve(); 
+            }, 2600 + (idx * 50));
         });
     }
-    function pickWinner() { let r = Math.random() * 100; let c = 0; for(let p of state.prizes) { c += p.prob; if(r < c) return p; } return state.prizes[state.prizes.length - 1]; }
-    function pushRecord(name, l, g) { const list = document.getElementById('luckyList'); if(list.innerText.includes("暫無")) list.innerHTML = ''; const div = document.createElement('div'); div.className = 'lucky-item'; div.innerHTML = `恭喜！在第 <b style="color:var(--accent-gold)">${l}</b> 抽獲得：<b>${name}</b> (累計第 ${g} 抽)`; list.prepend(div); }
-    function openModal(id) { if(id==='settingsModal') renderEditor(); document.getElementById(id).style.display = 'flex'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    function doRecharge(amt) { state.balance += amt; updateUI(); closeModal('rechargeModal'); }
-    function retryDraw() { handleDraw(state.lastTimes); }
-    function closeDraw() { document.getElementById('drawOverlay').style.display = 'none'; }
+
+    function pickWinner() {
+        let r = Math.random() * 100;
+        let c = 0;
+        for(let p of state.prizes) {
+            c += p.prob;
+            if(r < c) return p;
+        }
+        return state.prizes[state.prizes.length - 1];
+    }
+
+    function updateUI() {
+        document.getElementById('balDisplay').innerText = `$${state.balance.toLocaleString()}`;
+        document.getElementById('p1_cost').innerText = `$${state.price}`;
+        document.getElementById('p3_cost').innerText = `$${state.price * 3}`;
+        document.getElementById('p5_cost').innerText = `$${state.price * 5}`;
+        document.getElementById('p12_cost').innerText = `$${state.price * 12}`;
+    }
+
+    function pushRecord(name, l, g) {
+        const list = document.getElementById('luckyList');
+        if(list.innerText.includes("暫無")) list.innerHTML = '';
+        const div = document.createElement('div');
+        div.className = 'lucky-item';
+        div.innerHTML = `恭喜第 <b style="color:var(--accent-gold)">${l}</b> 抽獲：${name}`;
+        list.prepend(div);
+    }
+
+    function renderMainGrid() {
+        document.getElementById('mainGrid').innerHTML = state.prizes.map(p => `<div class="prize-card"><span>${p.icon}</span><div>${p.name}</div><b>$${p.val}</b></div>`).join('');
+    }
+
+    function renderEditor() {
+        document.getElementById('prizeEditList').innerHTML = state.prizes.map((p, i) => `
+            <div class="edit-row">
+                <input type="text" value="${p.name}" oninput="state.prizes[${i}].name=this.value">
+                <input type="number" value="${p.prob}" oninput="state.prizes[${i}].prob=parseFloat(this.value)">
+                <input type="number" value="${p.val}" oninput="state.prizes[${i}].val=parseInt(this.value)">
+                <button onclick="state.prizes.splice(${i},1);renderEditor()">×</button>
+            </div>`).join('');
+    }
+
     function openInventory() {
-        const list = document.getElementById('invList'); const valText = document.getElementById('recycleVal'); const total = state.inventory.reduce((s, i) => s + i.val, 0); valText.innerText = `$${total.toLocaleString()}`;
-        if(state.inventory.length === 0) list.innerHTML = '<p style="text-align:center; padding:20px; color:#555;">賞櫃是空的</p>';
-        else list.innerHTML = state.inventory.map(i => `<div class="inv-item"><span>${i.icon} ${i.name}</span><span style="color:var(--accent-gold)">$${i.val}</span></div>`).join('');
+        const list = document.getElementById('invList');
+        const total = state.inventory.reduce((s, i) => s + i.val, 0);
+        document.getElementById('recycleVal').innerText = `$${total.toLocaleString()}`;
+        list.innerHTML = state.inventory.map(i => `<div style="padding:10px; border-bottom:1px solid #333">${i.icon} ${i.name} ($${i.val})</div>`).join('');
         openModal('invModal');
     }
+
+    function saveSettings() {
+        state.price = parseInt(document.getElementById('setPrice').value) || 50;
+        state.prizes.forEach(p => p.isTop = p.val >= 5000);
+        updateUI(); renderMainGrid(); closeModal('settingsModal');
+    }
+
     function recycleAll() { state.balance += state.inventory.reduce((s, i) => s + i.val, 0); state.inventory = []; updateUI(); closeModal('invModal'); }
+    function openModal(id) { if(id==='settingsModal') { renderEditor(); document.getElementById('setPrice').value = state.price; } document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function doRecharge(a) { state.balance += a; updateUI(); closeModal('rechargeModal'); }
+    function retryDraw() { handleDraw(state.lastTimes); }
+    function closeDraw() { document.getElementById('drawOverlay').style.display = 'none'; }
+    function addNewPrize() { state.prizes.push({ name: "新獎項", prob: 1, val: 100, icon: "🎁", isTop: false }); renderEditor(); }
+
     window.onload = init;
 </script>
 </body>
