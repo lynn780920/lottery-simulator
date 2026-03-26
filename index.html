@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高級抽獎模擬器 V26 - 多重影片判定版</title>
+    <title>高級抽獎模擬器 V28 - 雙影片還原版</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -92,7 +92,7 @@
 
 <!-- 影片層 -->
 <div id="foxVideoLayer">
-    <video id="winVideo" playsinline muted>
+    <video id="winVideo" playsinline>
         <source id="videoSrc" src="fox_win.mp4" type="video/mp4">
     </video>
 </div>
@@ -107,10 +107,10 @@
 </div>
 
 <div class="boss-bar">
-    <div class="boss-avatar">🦊</div>
+    <div class="boss-avatar">👨‍🎤</div>
     <div class="boss-main">
-        <div class="boss-name">抽獎大師<span class="boss-lv">LV.99</span></div>
-        <div style="font-size: 0.8rem; opacity: 0.8;">抽中神級款觸發狐狸影片！</div>
+        <div class="boss-name">大魔王<span class="boss-lv">LV.99</span></div>
+        <div style="font-size: 0.8rem; opacity: 0.8;">到底是誰贏錢？</div>
     </div>
 </div>
 
@@ -150,9 +150,9 @@
 </div>
 
 <!-- Modal 區塊 -->
-<div id="settingsModal" class="modal-wrap"><div class="modal-body"><h3 style="color:var(--primary-pink); margin-top:0;">機率設定編輯器</h3><div style="margin-bottom:20px; font-weight:bold;">一抽價格：<input type="number" id="setPrice" style="width:80px; background:#000; color:var(--accent-gold); border:1px solid #444; padding:8px; border-radius:8px; text-align:center;"><span style="color:#666; margin-left:5px;">$</span></div><div class="setting-header-row"><div>名稱(關鍵字)</div><div>機率%</div><div>價值$</div><div></div></div><div id="prizeEditList" class="prize-edit-list"></div><div class="prob-sum-box" id="probSumBox">機率總計：<span id="probSumText">0%</span></div><button class="btn-yellow" onclick="addNewPrize()">+ 新增獎項</button><button class="btn-pink" onclick="saveSettings()">儲存並關閉</button></div></div>
-<div id="rechargeModal" class="modal-wrap"><div class="modal-body" style="text-align:center;"><h2 style="color:var(--accent-gold)">儲值中心</h2><div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;"><button class="btn-pink" onclick="doRecharge(1000)">$1,000</button><button class="btn-pink" onclick="doRecharge(10000)">$10,000</button></div><button class="btn-dark" onclick="closeModal('rechargeModal')">返回遊戲</button></div></div>
-<div id="invModal" class="modal-wrap"><div class="modal-body"><h3 style="margin-top:0;">我的賞櫃</h3><div id="invList" style="max-height:280px; overflow-y:auto; background:rgba(0,0,0,0.3); border-radius:15px;"></div><div style="margin-top:20px; text-align:right; font-weight:900;">回收總價值：<span id="recycleVal" style="color:var(--accent-gold)">$0</span></div><button class="btn-yellow" style="margin-top:15px;" onclick="recycleAll()">一鍵回收</button><button class="btn-dark" onclick="closeModal('invModal')">關閉</button></div></div>
+<div id="settingsModal" class="modal-wrap"><div class="modal-body"><h3 style="color:var(--primary-pink); margin-top:0;">遊戲參數設定</h3><div style="margin-bottom:20px; font-weight:bold;">一抽價格：<input type="number" id="setPrice" style="width:80px; background:#000; color:var(--accent-gold); border:1px solid #444; padding:8px; border-radius:8px; text-align:center;"><span style="color:#666; margin-left:5px;">$</span></div><div class="setting-header-row"><div>名稱</div><div>機率%</div><div>價值$</div><div></div></div><div id="prizeEditList" class="prize-edit-list"></div><div class="prob-sum-box" id="probSumBox">目前機率總計：<span id="probSumText">0%</span></div><button class="btn-yellow" onclick="addNewPrize()">+ 新增獎項</button><button class="btn-pink" onclick="saveSettings()">儲存並關閉</button></div></div>
+<div id="rechargeModal" class="modal-wrap"><div class="modal-body" style="text-align:center;"><h2 style="color:var(--accent-gold)">儲值中心</h2><div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;"><button class="btn-pink" onclick="doRecharge(1000)">$1,000</button><button class="btn-pink" onclick="doRecharge(5000)">$5,000</button><button class="btn-pink" onclick="doRecharge(10000)">$10,000</button><button class="btn-pink" onclick="doRecharge(50000)">$50,000</button></div><button class="btn-dark" onclick="closeModal('rechargeModal')">返回遊戲</button></div></div>
+<div id="invModal" class="modal-wrap"><div class="modal-body"><h3 style="margin-top:0;">我的賞櫃</h3><div id="invList" style="max-height:280px; overflow-y:auto; background:rgba(0,0,0,0.3); border-radius:15px;"></div><div style="margin-top:20px; text-align:right; font-weight:900;">回收總價值：<span id="recycleVal" style="color:var(--accent-gold)">$0</span></div><button class="btn-yellow" style="margin-top:15px;" onclick="recycleAll()">一鍵回收 (100% 價值)</button><button class="btn-dark" onclick="closeModal('invModal')">關閉</button></div></div>
 
 <script>
     let state = {
@@ -162,11 +162,12 @@
         inventory: [],
         lastTimes: 1,
         prizes: [
-            { name: "超神款：狐仙", prob: 0.2, val: 50000, icon: "🦊", isTop: true },
-            { name: "傳說款：仙女", prob: 0.8, val: 15000, icon: "🧚‍♀️", isTop: true },
-            { name: "AirPods Pro", prob: 2.0, val: 7990, icon: "🎧", isTop: true },
+            { name: "iPhone 15 Pro", prob: 0.2, val: 36900, icon: "📱", isTop: true },
+            { name: "PS5 Slim", prob: 0.8, val: 17500, icon: "🎮", isTop: true },
+            { name: "AirPods Max", prob: 2.0, val: 18000, icon: "🎧", isTop: true },
+            { name: "小米手環 8", prob: 12.0, val: 1095, icon: "⌚", isTop: false },
             { name: "行動電源", prob: 25.0, val: 790, icon: "🔋", isTop: false },
-            { name: "造型貼紙", prob: 72.0, val: 50, icon: "🏷️", isTop: false }
+            { name: "造型貼紙", prob: 60.0, val: 50, icon: "🏷️", isTop: false }
         ]
     };
 
@@ -177,27 +178,23 @@
         renderMainGrid();
     }
 
-    // ✨ 關鍵邏輯：多重影片判定播放器
-    function playWinVideo(type) {
+    // ✨ 支援雙部影片判定的播放邏輯
+    function playWinVideo(videoType) {
         const layer = document.getElementById('foxVideoLayer');
         const video = document.getElementById('winVideo');
-        const vSource = document.getElementById('videoSrc');
+        const source = document.getElementById('videoSrc');
 
-        // 判定播放哪一個影片檔案
-        if (type === 'fox') {
-            vSource.src = "fox_win.mp4"; // 狐狸影片
-        } else if (type === 'fairy') {
-            vSource.src = "fairy_win.mp4"; // 仙女影片
+        // 根據傳入的類型更換影片源
+        if (videoType === 'fox') {
+            source.src = "fox_win.mp4";
+        } else if (videoType === 'fairy') {
+            source.src = "fairy_win.mp4";
         }
 
         layer.style.display = 'flex';
-        video.load(); // 重新加載影片源
-        video.muted = false; // 嘗試有聲播放
-        video.play().catch(() => {
-            video.muted = true; // 失敗則靜音播放（保證畫面能出來）
-            video.play();
-        });
-
+        video.load(); // 重新載入新的 Source
+        video.currentTime = 0;
+        video.play();
         video.onended = () => { layer.style.display = 'none'; };
     }
 
@@ -214,6 +211,8 @@
 
         let anims = [];
         let winners = [];
+        
+        // 判定變數
         let hasFox = false;
         let hasFairy = false;
 
@@ -224,19 +223,20 @@
                 state.totalCount++;
                 const winner = pickWinner();
                 
-                // 判定是否中大獎
-                if(winner.name.includes("超神款")) hasFox = true;
-                else if(winner.name.includes("傳說款")) hasFairy = true;
-                
+                // ✨ 偵測名稱關鍵字來判定要播哪部影片
+                if(winner.name.includes("iPhone")) hasFox = true; 
+                if(winner.name.includes("PS5")) hasFairy = true; 
+
                 winners.push({ winner, local: i+1, global: state.totalCount });
                 anims.push(runSlotAnim(i, winner));
                 slot.style.opacity = "1";
             } else {
                 slot.style.opacity = "0.05";
+                document.getElementById(`strip-${i}`).innerHTML = '';
             }
         }
 
-        // ✨ 優先權判定邏輯
+        // ✨ 偵測大獎播放影片 (iPhone播狐狸, PS5播仙女, 同時抽中以狐狸為優先)
         if(hasFox) {
             setTimeout(() => { playWinVideo('fox'); }, 1200);
         } else if(hasFairy) {
@@ -251,16 +251,17 @@
         document.getElementById('drawActions').style.display = 'flex';
     }
 
-    // --- 以下功能完整保留與還原 ---
     function updateUI() {
         document.getElementById('balDisplay').innerText = `$${state.balance.toLocaleString()}`;
         document.getElementById('p1_cost').innerText = `$${state.price}`;
         document.getElementById('p3_cost').innerText = `$${state.price * 3}`;
         document.getElementById('p5_cost').innerText = `$${state.price * 5}`;
         document.getElementById('p12_cost').innerText = `$${state.price * 12}`;
+        document.getElementById('setPrice').value = state.price;
     }
     function renderMainGrid() {
-        document.getElementById('mainGrid').innerHTML = state.prizes.map(p => `<div class="prize-card"><span class="prize-icon">${p.icon}</span><div class="prize-name">${p.name}</div><div class="prize-val">$${p.val}</div></div>`).join('');
+        const grid = document.getElementById('mainGrid');
+        grid.innerHTML = state.prizes.map(p => `<div class="prize-card"><span class="prize-icon">${p.icon}</span><div class="prize-name">${p.name}</div><div class="prize-val">$${p.val}</div></div>`).join('');
     }
     function renderEditor() {
         const list = document.getElementById('prizeEditList');
@@ -275,7 +276,7 @@
     }
     function addNewPrize() { state.prizes.push({ name: "新獎項", prob: 0, val: 0, icon: "🎁", isTop: false }); renderEditor(); }
     function removePrize(i) { state.prizes.splice(i, 1); renderEditor(); }
-    function saveSettings() { state.price = parseInt(document.getElementById('setPrice').value) || 50; state.prizes.forEach(p => p.isTop = p.val >= 5000); updateUI(); renderMainGrid(); closeModal('settingsModal'); }
+    function saveSettings() { state.price = parseInt(document.getElementById('setPrice').value) || 50; state.prizes.forEach(p => p.isTop = p.val > 5000); updateUI(); renderMainGrid(); closeModal('settingsModal'); }
     function runSlotAnim(idx, winner) {
         return new Promise(resolve => {
             const strip = document.getElementById(`strip-${idx}`);
@@ -292,7 +293,7 @@
         });
     }
     function pickWinner() { let r = Math.random() * 100; let c = 0; for(let p of state.prizes) { c += p.prob; if(r < c) return p; } return state.prizes[state.prizes.length - 1]; }
-    function pushRecord(name, l, g) { const list = document.getElementById('luckyList'); if(list.innerText.includes("暫無")) list.innerHTML = ''; const div = document.createElement('div'); div.className = 'lucky-item'; div.innerHTML = `恭喜獲得：<b>${name}</b> (第 ${l} 抽/累計 ${g})`; list.prepend(div); }
+    function pushRecord(name, l, g) { const list = document.getElementById('luckyList'); if(list.innerText.includes("暫無")) list.innerHTML = ''; const div = document.createElement('div'); div.className = 'lucky-item'; div.innerHTML = `恭喜！在第 <b style="color:var(--accent-gold)">${l}</b> 抽獲得：<b>${name}</b> (累計第 ${g} 抽)`; list.prepend(div); }
     function openModal(id) { if(id==='settingsModal') renderEditor(); document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function doRecharge(amt) { state.balance += amt; updateUI(); closeModal('rechargeModal'); }
@@ -300,7 +301,8 @@
     function closeDraw() { document.getElementById('drawOverlay').style.display = 'none'; }
     function openInventory() {
         const list = document.getElementById('invList'); const valText = document.getElementById('recycleVal'); const total = state.inventory.reduce((s, i) => s + i.val, 0); valText.innerText = `$${total.toLocaleString()}`;
-        list.innerHTML = state.inventory.map(i => `<div class="inv-item"><span>${i.icon} ${i.name}</span><span style="color:var(--accent-gold)">$${i.val}</span></div>`).join('');
+        if(state.inventory.length === 0) list.innerHTML = '<p style="text-align:center; padding:20px; color:#555;">賞櫃是空的</p>';
+        else list.innerHTML = state.inventory.map(i => `<div class="inv-item"><span>${i.icon} ${i.name}</span><span style="color:var(--accent-gold)">$${i.val}</span></div>`).join('');
         openModal('invModal');
     }
     function recycleAll() { state.balance += state.inventory.reduce((s, i) => s + i.val, 0); state.inventory = []; updateUI(); closeModal('invModal'); }
